@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "PhotoVerify_IOS",
+    "codename": "Cupertino",
+    "version": "IOS-1.0.0",
+    "status": "iOS Development Variant",
+    "philosophy": "Democratic Forensic Suite for iOS devices. Sovereignty first: 100% local processing.",
+    "architecture": "Capacitor 8 (React 19 + TypeScript 5) with Swift Native Bridge for iOS File System."
+  },
+  "scientific_layers": [
+    {
+      "layer": 1,
+      "name": "Invisible Stamp (LSB+)",
+      "scope": "CORE",
+      "technical": "4-bit differential encoding in blue channels."
+    }
+  ],
+  "components": [
+    {
+      "id": "SYS_IOS_BRIDGE",
+      "functional": "Native iOS Storage Bridge",
+      "design": "Integratie met iOS Files app en iCloud Drive.",
+      "technical": "Swift-based Capacitor Plugin (To be developed)"
+    }
+  ]
+}
