@@ -1,17 +1,21 @@
 import { useState, type ChangeEvent } from 'react';
 import { extractVirtualDataAsync } from '../utils/virtualStorage';
 import { getHistory, type HistoryEntry } from '../utils/history';
+import { generateForensicPDF, type ReportData, openEmbeddedReport } from '../utils/pdfGenerator';
+import { extractEmbeddedReport } from '../utils/metadata';
+import versionData from '../version.json';
 
 interface Props {
+  deviceId: string;
   onStart: () => void;
   onProgress: (p: number) => void;
   onEnd: () => void;
 }
 
-export default function CopyrightVerifier({ onStart, onProgress, onEnd }: Props) {
+export default function CopyrightVerifier({ deviceId, onStart, onProgress, onEnd }: Props) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [filename, setFilename] = useState<string>('');
-  const [result, setResult] = useState<{ uid: string, confidence: number, diagnostics?: string } | null>(null);
+  const [result, setResult] = useState<{ uid: string, confidence: number, diagnostics?: string, embeddedReport?: string | null } | null>(null);
   const [scanAttempted, setScanAttempted] = useState(false);
   const [showRecent, setShowRecent] = useState(false);
 
@@ -35,6 +39,24 @@ export default function CopyrightVerifier({ onStart, onProgress, onEnd }: Props)
     reader.readAsDataURL(file);
   };
 
+  const handleExportPDF = () => {
+    if (!result || !image) return;
+    const report: ReportData = {
+      title: filename,
+      version: versionData.current,
+      timestamp: new Date().toLocaleString(),
+      deviceId: deviceId,
+      results: [{ label: 'Invisible Stamp', status: 'SUCCESS', detail: `Code: ${result.uid} (${(result.confidence * 100).toFixed(1)}% confidence)` }],
+      images: [{ label: 'Scanned Photo', url: image.src }],
+      forensics: [
+        { label: 'Found UID', value: result.uid },
+        { label: 'Extraction Confidence', value: `${(result.confidence * 100).toFixed(1)}%` },
+        { label: 'Diagnostics', value: result.diagnostics || 'None' }
+      ]
+    };
+    generateForensicPDF(report);
+  };
+
   const scan = async () => {
     if (!image) return;
     onStart();
@@ -45,11 +67,13 @@ export default function CopyrightVerifier({ onStart, onProgress, onEnd }: Props)
     ctx.drawImage(image, 0, 0);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     
+    const embeddedReport = extractEmbeddedReport(image.src);
     const data = await extractVirtualDataAsync(imageData, onProgress);
+    
     if (data) {
-      setResult({ uid: data.uid, confidence: data.confidence, diagnostics: data.diagnostics });
+      setResult({ uid: data.uid, confidence: data.confidence, diagnostics: data.diagnostics, embeddedReport });
     } else {
-      setResult(null);
+      setResult(embeddedReport ? { uid: 'REPORT ONLY', confidence: 0, embeddedReport } : null);
     }
     setScanAttempted(true);
     onEnd();
@@ -87,16 +111,27 @@ export default function CopyrightVerifier({ onStart, onProgress, onEnd }: Props)
         <div className="mt-1 text-center" style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px' }}>
           <p style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '10px' }}>✅ LOADED: {filename}</p>
           <button onClick={scan} className="btn btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', boxShadow: '0 0 15px rgba(96, 165, 250, 0.3)' }}>
-            SCAN FOR INVISIBLE STAMP
+            SCAN FOR INVISIBLE STAMP & REPORT
           </button>
         </div>
       )}
 
       {scanAttempted && result && (
         <div className="results success">
-          <h3>Invisible Stamp Found!</h3>
-          <p>Found Code: <strong style={{ fontSize: '1.5em', color: '#0f0', letterSpacing: '2px' }}>{result.uid}</strong></p>
-          <p>Confidence: <strong>{(result.confidence * 100).toFixed(1)}%</strong></p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>Scan Result</h3>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {result.uid !== 'REPORT ONLY' && <button className="btn btn-primary" onClick={handleExportPDF} style={{ padding: '5px 15px', fontSize: '0.8rem', background: '#ef4444', border: 'none' }}>📄 NEW PDF</button>}
+              {result.embeddedReport && <button className="btn btn-primary" onClick={() => openEmbeddedReport(result.embeddedReport!)} style={{ padding: '5px 15px', fontSize: '0.8rem', background: '#10b981', border: 'none' }}>📜 VIEW EMBEDDED PDF</button>}
+            </div>
+          </div>
+          {result.uid !== 'REPORT ONLY' && (
+            <>
+              <p>Found Code: <strong style={{ fontSize: '1.5em', color: '#0f0', letterSpacing: '2px' }}>{result.uid}</strong></p>
+              <p>Confidence: <strong>{(result.confidence * 100).toFixed(1)}%</strong></p>
+            </>
+          )}
+          {result.embeddedReport && <p style={{ fontSize: '0.8rem', color: '#10b981' }}>✅ High-Integrity Forensic Report found inside image pixels.</p>}
         </div>
       )}
     </div>
