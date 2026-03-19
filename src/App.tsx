@@ -73,7 +73,7 @@ function App() {
   const [sharedImage, setSharedImage] = useState<HTMLImageElement | null>(null);
   const [sharedFilename, setSharedFilename] = useState<string>('photo.png');
   const [sharedUid, setSharedUid] = useState<string>(localStorage.getItem('default_stamp_code') || generateUniqueStamp());
-...
+
   // Refresh stamp code when entering Shield mode to ensure uniqueness
   useEffect(() => {
     if (mode === 'SHIELD_AUTO' && !localStorage.getItem('default_stamp_code')) {
@@ -400,11 +400,12 @@ function App() {
     };
     
     await bundleEvidence(
-      canvas.toDataURL('image/png'), 
-      borderCanvas ? borderCanvas.toDataURL('image/png') : null, 
-      interiorCanvas.toDataURL('image/png'), 
-      deed, 
-      `${useStamp ? finalCode : 'NOSTAMP'}_${sharedFilename}`
+      canvas.toDataURL('image/png'),
+      borderCanvas ? borderCanvas.toDataURL('image/png') : null,
+      interiorCanvas.toDataURL('image/png'),
+      deed,
+      `${useStamp ? finalCode : 'NOSTAMP'}_${sharedFilename}`,
+      (p: number) => setProgress(p)
     );
     
     endProc();
@@ -696,17 +697,18 @@ function App() {
           <div className="wizard-flow">
             <button className="btn btn-secondary mb-1" onClick={() => { setMode('START'); setSharedZipBlob(undefined); }}>← Back</button>
             <div className="card-glass" style={{ border: '2px solid #60a5fa' }}>
-              <ZipVerifier 
-                initialFile={sharedZipBlob} 
+              <ZipVerifier
+                initialFile={sharedZipBlob}
                 onNativePick={openNativeFilePicker}
-                onStart={startProc} 
-                onProgress={setProgress} 
-                onEnd={endProc} 
+                deviceId={license?.deviceHash || 'UNKNOWN'}
+                onStart={startProc}
+                onProgress={setProgress}
+                onEnd={endProc}
               />
             </div>
-            <div className="card-glass"><CopyrightVerifier onStart={() => startProc('Scanning...')} onProgress={setProgress} onEnd={endProc} /></div>
-            <div className="card-glass"><TimeAnchorVerifier onStart={() => startProc('Auditing...')} onProgress={setProgress} onEnd={endProc} /></div>
-            <div className="card-glass"><LegacyBorderVerifier onStart={() => startProc('Verifying...')} onProgress={setProgress} onEnd={endProc} /></div>
+            <div className="card-glass"><CopyrightVerifier deviceId={license?.deviceHash || 'UNKNOWN'} onStart={() => startProc('Scanning...')} onProgress={setProgress} onEnd={endProc} /></div>
+            <div className="card-glass"><TimeAnchorVerifier deviceId={license?.deviceHash || 'UNKNOWN'} onStart={() => startProc('Auditing...')} onProgress={setProgress} onEnd={endProc} /></div>
+            <div className="card-glass"><LegacyBorderVerifier deviceId={license?.deviceHash || 'UNKNOWN'} onStart={() => startProc('Verifying...')} onProgress={setProgress} onEnd={endProc} /></div>
           </div>
         )}
       </main>

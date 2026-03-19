@@ -7,12 +7,12 @@ def validate_repo():
     if not os.path.exists(repo_path):
         print(f"Error: {repo_path} not found.")
         sys.exit(1)
-        
+
     with open(repo_path, 'r') as f:
         repo = json.load(f)
-        
-    print(f"--- PhotoVerify Build Validation (v{repo['project']['version']}) ---")
-    
+
+    print(f"--- PhotoVerify_IOS Build Validation (v{repo['project']['version']}) ---")
+
     # Files to verify based on technical mappings
     files_to_check = [
         "src/App.tsx",
@@ -23,10 +23,8 @@ def validate_repo():
         "src/utils/perceptualHash.ts",
         "src/components/LegacyBorderVerifier.tsx",
         "src/utils/timeAnchor.ts",
-        "android/app/src/main/java/nl/fotolerant/photovault/MainActivity.java",
-        "android/app/src/main/java/nl/fotolerant/photovault/NativeBridgePlugin.java"
     ]
-    
+
     missing_files = []
     for f_path in files_to_check:
         if os.path.exists(f_path):
@@ -34,7 +32,7 @@ def validate_repo():
         else:
             print(f"[MISSING] {f_path}")
             missing_files.append(f_path)
-            
+
     if missing_files:
         print("\nFATAL: Build aborted. The following core components are missing:")
         for m in missing_files:

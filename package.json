@@ -1,7 +1,7 @@
 {
   "name": "photoverify-ios",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,7 +18,10 @@
     "@capacitor/device": "^8.0.1",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/share": "^8.0.1",
+    "@types/exif-js": "^2.3.1",
+    "exif-js": "^2.3.0",
     "jszip": "^3.10.1",
+    "piexifjs": "^1.0.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
